@@ -7,11 +7,10 @@ import (
 	"sync"
 )
 
-func New() (*ServiceCaller, error) {
-	me := &ServiceCaller{
+func New() *ServiceCaller {
+	return &ServiceCaller{
 		server: rpc.NewServer(),
 	}
-	return me, nil
 }
 
 type ServiceCaller struct {
