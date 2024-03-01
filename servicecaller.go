@@ -88,7 +88,7 @@ func (me *ServiceCaller) Call(ctx context.Context, serviceMethod string, args an
 	returnValues := function.Call([]reflect.Value{s.rcvr, reflect.ValueOf(ctx), argv, replyv})
 	errInter := returnValues[0].Interface()
 	if errInter == nil {
-		return reflect.Indirect(replyv).Interface(), nil
+		return replyv.Interface(), nil
 	}
 	return nil, errInter.(error)
 }
