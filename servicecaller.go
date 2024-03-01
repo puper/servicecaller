@@ -3,10 +3,11 @@ package servicecaller
 import (
 	"context"
 	"encoding/json"
-	"errors"
 	"go/token"
 	"reflect"
 	"strings"
+
+	"github.com/pkg/errors"
 )
 
 func New() *ServiceCaller {
@@ -35,7 +36,7 @@ func (me *ServiceCaller) Get(name string) any {
 	return me.serviceMap[name]
 }
 
-func (me *ServiceCaller) Call(ctx context.Context, serviceMethod string, args json.RawMessage) (any, error) {
+func (me *ServiceCaller) Call(ctx context.Context, serviceMethod string, args any) (any, error) {
 	dot := strings.LastIndex(serviceMethod, ".")
 	if dot < 0 {
 		return nil, errors.New("service/method request ill-formed: " + serviceMethod)
@@ -58,8 +59,18 @@ func (me *ServiceCaller) Call(ctx context.Context, serviceMethod string, args js
 		argv = reflect.New(mtype.ArgType)
 		argIsValue = true
 	}
-	if err := json.Unmarshal(args, argv.Interface()); err != nil {
-		return nil, err
+	if reflect.TypeOf(args) == mtype.ArgType {
+		if argIsValue {
+			argv.Elem().Set(reflect.ValueOf(args))
+		} else {
+			argv.Set(reflect.ValueOf(args))
+		}
+	} else if jsonRaw, ok := args.(json.RawMessage); ok {
+		if err := json.Unmarshal(jsonRaw, argv.Interface()); err != nil {
+			return nil, errors.WithMessage(err, "json.Unmarshal")
+		}
+	} else {
+		return nil, errors.New("args type error")
 	}
 	if argIsValue {
 		argv = argv.Elem()
@@ -128,6 +139,8 @@ type service struct {
 }
 
 var typeOfError = reflect.TypeFor[error]()
+
+var typeOfJsonRawMessage = reflect.TypeFor[json.RawMessage]()
 
 var typeOfContext = reflect.TypeFor[context.Context]()
 
