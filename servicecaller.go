@@ -63,7 +63,7 @@ func (me *ServiceCaller) Call(ctx context.Context, serviceMethod string, args an
 		if argIsValue {
 			argv.Elem().Set(reflect.ValueOf(args))
 		} else {
-			argv.Set(reflect.ValueOf(args))
+			argv.Elem().Set(reflect.ValueOf(args).Elem())
 		}
 	} else if jsonRaw, ok := args.(json.RawMessage); ok {
 		if err := json.Unmarshal(jsonRaw, argv.Interface()); err != nil {
